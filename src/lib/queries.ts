@@ -53,24 +53,43 @@ export interface ClusterBuy {
   latest_date: string;
 }
 
-/** Companies where 2+ distinct insiders bought within the last N days. */
+/**
+ * Companies where 2+ insiders bought within the last N days, across 2+
+ * separate filings. Requiring separate filings matters: one filing can list
+ * six related co-filers for a single purchase — that's not a cluster, and
+ * joining owners before summing would also multiply the dollar value.
+ */
 export async function clusterBuys(days = 14): Promise<ClusterBuy[]> {
   const db = await getDb();
   return db.query<ClusterBuy>(
-    `SELECT c.ticker, c.name AS company_name, c.cik AS company_cik,
-            COUNT(DISTINCT i.cik)::text AS buyers,
-            SUM(t.shares * t.price_per_share)::text AS total_value,
-            MAX(t.transaction_date)::text AS latest_date
-     FROM transactions t
-     JOIN filings f ON f.accession_number = t.accession_number
-     JOIN companies c ON c.cik = f.company_cik
-     JOIN filing_owners fo ON fo.accession_number = f.accession_number
-     JOIN insiders i ON i.cik = fo.insider_cik
-     WHERE t.code = 'P' AND t.is_derivative = FALSE
-       AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
-     GROUP BY c.cik, c.ticker, c.name
-     HAVING COUNT(DISTINCT i.cik) >= 2
-     ORDER BY COUNT(DISTINCT i.cik) DESC, total_value DESC NULLS LAST`,
+    `WITH buys AS (
+       SELECT f.company_cik, f.accession_number,
+              SUM(t.shares * t.price_per_share) AS value,
+              MAX(t.transaction_date) AS latest
+       FROM transactions t
+       JOIN filings f ON f.accession_number = t.accession_number
+       WHERE t.code = 'P' AND t.is_derivative = FALSE
+         AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
+       GROUP BY f.company_cik, f.accession_number
+     ),
+     per_company AS (
+       SELECT company_cik, COUNT(*) AS filings,
+              SUM(value) AS total_value, MAX(latest) AS latest_date
+       FROM buys GROUP BY company_cik
+     ),
+     buyer_counts AS (
+       SELECT b.company_cik, COUNT(DISTINCT fo.insider_cik) AS buyers
+       FROM buys b
+       JOIN filing_owners fo ON fo.accession_number = b.accession_number
+       GROUP BY b.company_cik
+     )
+     SELECT c.ticker, c.name AS company_name, c.cik AS company_cik,
+            bc.buyers::text, pc.total_value::text, pc.latest_date::text
+     FROM per_company pc
+     JOIN buyer_counts bc ON bc.company_cik = pc.company_cik
+     JOIN companies c ON c.cik = pc.company_cik
+     WHERE bc.buyers >= 2 AND pc.filings >= 2 AND c.ticker IS NOT NULL
+     ORDER BY bc.buyers DESC, pc.total_value DESC NULLS LAST`,
     [days],
   );
 }

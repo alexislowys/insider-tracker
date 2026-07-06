@@ -35,7 +35,9 @@ export async function getDb(): Promise<Db> {
     };
   } else {
     const { PGlite } = await import("@electric-sql/pglite");
-    const pglite = new PGlite(join(process.cwd(), ".pglite"));
+    const pglite = new PGlite(
+      join(process.cwd(), process.env.PGLITE_DIR ?? ".pglite"),
+    );
     instance = {
       async query<T>(text: string, params?: unknown[]) {
         const res = await pglite.query<T>(text, params);
