@@ -13,6 +13,7 @@ export interface Form4Transaction {
   acquiredDisposed: "A" | "D";
   sharesOwnedAfter: number | null;
   isDerivative: boolean;
+  directOwnership: boolean; // false = indirect (trust, LLC, spouse...)
 }
 
 export interface Form4Owner {
@@ -84,6 +85,7 @@ function parseTransaction(
   if (!code || !date) return null; // holdings rows / malformed entries
 
   const ad = val(amounts?.transactionAcquiredDisposedCode);
+  const nature = tx.ownershipNature as Record<string, unknown> | undefined;
   return {
     securityTitle: val(tx.securityTitle) ?? "Unknown",
     transactionDate: date.slice(0, 10),
@@ -93,6 +95,7 @@ function parseTransaction(
     acquiredDisposed: ad === "D" ? "D" : "A",
     sharesOwnedAfter: num(post?.sharesOwnedFollowingTransaction),
     isDerivative,
+    directOwnership: val(nature?.directOrIndirectOwnership) !== "I",
   };
 }
 
