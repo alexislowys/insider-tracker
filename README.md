@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Insider Tracker
 
-## Getting Started
+Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, and executive activity. Built with Next.js, PostgreSQL, and the SEC EDGAR API.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Cluster-buy detection** — flags companies where 2+ distinct insiders bought within 14 days, historically the strongest insider signal
+- **Open-market trade feed** — latest buys (code P) and sells (code S), filtered from the noise of grants and option exercises
+- **Company pages** — insider activity timeline plus a 90-day buy/sell dollar-flow chart
+- **Insider pages** — full transaction history for any executive or director
+- **Self-healing daily ingestion** — Vercel Cron re-ingests a 3-day window each weekday; ingestion is idempotent so overlaps and reruns are free
+
+## Architecture
+
+```
+SEC EDGAR daily index ──> Form 4 XML ──> parser ──> PostgreSQL ──> Next.js (RSC)
+        (rate-limited client, 8 req/s, retry on 429/503)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `src/lib/edgar/` — EDGAR HTTP client (throttled, SEC-compliant User-Agent), daily-index discovery, Form 4 XML parser
+- `src/lib/db/` — schema + database adapter: any Postgres via `DATABASE_URL`, or zero-install [PGlite](https://pglite.dev/) for local dev
+- `src/lib/ingest.ts` — idempotent filing ingestion (crash-safe, dedupes multi-filer index entries)
+- `src/lib/queries.ts` — read queries for the UI
+- `src/app/` — dashboard, `/company/[ticker]`, `/insider/[cik]`, cron endpoint
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Form 4 edge cases handled
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Prices hidden in footnotes (stored as `NULL`, rendered as "footnote")
+- Multi-owner filings and duplicate daily-index entries per filer
+- Direct vs indirect ownership rows that otherwise look identical
+- Missing/`NONE` tickers, weekend/holiday index files (EDGAR 403s), value-wrapped vs inline XML leaves
 
-## Learn More
+## Running locally
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npx tsx scripts/ingest.ts --days 10   # backfill into local PGlite (no DB install needed)
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Useful scripts:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx tsx scripts/test-parser.ts        # parse 50 live filings, print results
+npx tsx scripts/ingest.ts --days 5 --limit 100
+npx tsx scripts/stats.ts              # row counts + sanity checks
+```
 
-## Deploy on Vercel
+## Deploying
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Create a Postgres database (e.g. [Neon](https://neon.tech)) and set `DATABASE_URL`
+2. Set `CRON_SECRET` to protect the ingestion endpoint
+3. Deploy to Vercel — `vercel.json` schedules `/api/cron/ingest` weekdays at 22:30 UTC
+4. Backfill once from your machine: `DATABASE_URL=... npx tsx scripts/ingest.ts --days 30`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Data notes
+
+Source: SEC EDGAR Form 4 filings. The client stays under the SEC's 10 req/s limit and identifies itself per SEC policy. Not investment advice.
