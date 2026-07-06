@@ -44,3 +44,20 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 CREATE INDEX IF NOT EXISTS idx_transactions_filing ON transactions (accession_number);
 CREATE INDEX IF NOT EXISTS idx_transactions_date_code ON transactions (transaction_date, code);
+
+CREATE TABLE IF NOT EXISTS alert_subscriptions (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  email TEXT NOT NULL,
+  company_cik TEXT NOT NULL REFERENCES companies (cik),
+  token TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (email, company_cik)
+);
+
+-- One row per alert actually sent; the PK prevents double-notifying
+CREATE TABLE IF NOT EXISTS alert_notifications (
+  subscription_id BIGINT NOT NULL REFERENCES alert_subscriptions (id) ON DELETE CASCADE,
+  accession_number TEXT NOT NULL REFERENCES filings (accession_number) ON DELETE CASCADE,
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (subscription_id, accession_number)
+);

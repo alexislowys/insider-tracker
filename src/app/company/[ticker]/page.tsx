@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { companyActivity, companyByTicker, companyDailyFlow } from "@/lib/queries";
 import { fmtValue } from "@/lib/format";
 import { TradeTable } from "@/components/TradeTable";
+import { AlertForm } from "@/components/AlertForm";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,9 @@ export default async function CompanyPage({
             {company.name}
           </span>
         </h1>
+        <div className="mt-3">
+          <AlertForm ticker={company.ticker} />
+        </div>
       </div>
       <FlowChart flow={flow} />
       <section>

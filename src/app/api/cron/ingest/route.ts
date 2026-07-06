@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { ingestDay } from "@/lib/ingest";
+import { dispatchAlerts } from "@/lib/alerts";
 
 export const maxDuration = 300;
 
@@ -22,5 +23,6 @@ export async function GET(req: NextRequest) {
     const stats = await ingestDay(db, day);
     results.push({ day: day.toISOString().slice(0, 10), ...stats });
   }
-  return NextResponse.json({ results });
+  const alerts = await dispatchAlerts(db);
+  return NextResponse.json({ results, alerts });
 }
