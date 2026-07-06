@@ -143,7 +143,8 @@ export function parseForm4(xml: string, accessionNumber: string): Form4Filing {
     issuerCik: String(val(issuer.issuerCik) ?? "").padStart(10, "0"),
     issuerName: val(issuer.issuerName) ?? "Unknown",
     ticker,
-    periodOfReport: val(doc.periodOfReport) ?? "",
+    // Some filers append a TZ offset ("2026-06-30-05:00") — keep the date only
+    periodOfReport: (val(doc.periodOfReport) ?? "").slice(0, 10),
     owners,
     transactions,
   };

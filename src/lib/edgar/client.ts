@@ -19,12 +19,21 @@ function throttle(): Promise<void> {
 
 export async function edgarFetch(url: string, retries = 3): Promise<Response> {
   await throttle();
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": USER_AGENT,
-      "Accept-Encoding": "gzip, deflate",
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: {
+        "User-Agent": USER_AGENT,
+        "Accept-Encoding": "gzip, deflate",
+      },
+    });
+  } catch (e) {
+    if (retries > 0) {
+      await new Promise((r) => setTimeout(r, 2000 * (4 - retries)));
+      return edgarFetch(url, retries - 1);
+    }
+    throw e;
+  }
   if ((res.status === 429 || res.status === 503) && retries > 0) {
     await new Promise((r) => setTimeout(r, 2000 * (4 - retries)));
     return edgarFetch(url, retries - 1);
