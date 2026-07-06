@@ -80,7 +80,7 @@ describe("parseForm4", () => {
 
   it("returns null price when it lives in a footnote", () => {
     const tx = BUY_TX.replace(
-      /<transactionPricePerShare>.*?<\/transactionPricePerShare>/s,
+      /<transactionPricePerShare>[\s\S]*?<\/transactionPricePerShare>/,
       "<transactionPricePerShare><footnoteId id=\"F1\"/></transactionPricePerShare>",
     );
     const f = parseForm4(form4Xml({ nonDeriv: tx }), "acc-4");
