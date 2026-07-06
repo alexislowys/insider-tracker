@@ -7,7 +7,8 @@ async function main() {
 
   const dupes = await db.query(
     `SELECT accession_number FROM transactions
-     GROUP BY accession_number, security_title, transaction_date, code, shares
+     GROUP BY accession_number, security_title, transaction_date, code, shares,
+       shares_owned_after, direct_ownership
      HAVING COUNT(*) > 1`,
   );
   console.log(`duplicate transaction rows: ${dupes.length}`);
