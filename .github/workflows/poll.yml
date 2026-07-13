@@ -1,0 +1,16 @@
+name: Poll EDGAR
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ingestion endpoint
+        run: |
+          curl -fsS --max-time 290 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://insider-tracker-three.vercel.app/api/cron/poll

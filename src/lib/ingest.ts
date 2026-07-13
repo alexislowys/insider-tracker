@@ -18,19 +18,25 @@ export async function ingestDay(
   day: Date,
   limit = Infinity,
 ): Promise<IngestStats> {
+  const refs = (await listForm4Filings(day)).slice(
+    0,
+    Number.isFinite(limit) ? limit : undefined,
+  );
+  return ingestRefs(db, refs);
+}
+
+/** Ingest a batch of filing references, skipping ones already in the DB. */
+export async function ingestRefs(
+  db: Db,
+  refs: FilingRef[],
+): Promise<IngestStats> {
   const stats: IngestStats = {
-    listed: 0,
+    listed: refs.length,
     ingested: 0,
     skipped: 0,
     failed: 0,
     errors: [],
   };
-
-  const refs = (await listForm4Filings(day)).slice(
-    0,
-    Number.isFinite(limit) ? limit : undefined,
-  );
-  stats.listed = refs.length;
   if (refs.length === 0) return stats;
 
   // One query to skip everything already ingested (crash-safe reruns)
