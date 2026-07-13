@@ -32,9 +32,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
         <header className="border-b border-zinc-800">
           <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
-            <Link href="/" className="text-lg font-semibold tracking-tight">
-              Insider<span className="text-emerald-400">Tracker</span>
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="text-lg font-semibold tracking-tight">
+                Insider<span className="text-emerald-400">Tracker</span>
+              </Link>
+              <Link href="/screener" className="text-sm text-zinc-400 hover:text-zinc-100">
+                Screener
+              </Link>
+            </div>
             <form action="/search" className="flex items-center gap-2">
               <input
                 name="q"

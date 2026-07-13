@@ -45,6 +45,14 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE INDEX IF NOT EXISTS idx_transactions_filing ON transactions (accession_number);
 CREATE INDEX IF NOT EXISTS idx_transactions_date_code ON transactions (transaction_date, code);
 
+-- Daily close cache (source: Yahoo chart API, fetched on demand per ticker)
+CREATE TABLE IF NOT EXISTS prices (
+  ticker TEXT NOT NULL,
+  date DATE NOT NULL,
+  close NUMERIC NOT NULL,
+  PRIMARY KEY (ticker, date)
+);
+
 CREATE TABLE IF NOT EXISTS alert_subscriptions (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   email TEXT NOT NULL,

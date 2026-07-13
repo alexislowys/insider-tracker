@@ -136,6 +136,54 @@ export async function insiderActivity(
   );
 }
 
+/** Largest single open-market buys in the window (one row per transaction). */
+export async function topBuys(days = 7, limit = 10): Promise<ActivityRow[]> {
+  const db = await getDb();
+  return db.query<ActivityRow>(
+    `${ACTIVITY_SELECT} AND t.code = 'P'
+       AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
+     ORDER BY value DESC NULLS LAST
+     LIMIT $2`,
+    [days, limit],
+  );
+}
+
+export interface TickerLeader {
+  ticker: string;
+  company_name: string;
+  buyers: string;
+  total_value: string | null;
+}
+
+/** Tickers with the most distinct insider buyers in the window. */
+export async function mostBoughtTickers(
+  days = 7,
+  limit = 6,
+): Promise<TickerLeader[]> {
+  const db = await getDb();
+  return db.query<TickerLeader>(
+    `WITH buys AS (
+       SELECT f.company_cik, f.accession_number,
+              SUM(t.shares * t.price_per_share) AS value
+       FROM transactions t
+       JOIN filings f ON f.accession_number = t.accession_number
+       WHERE t.code = 'P' AND t.is_derivative = FALSE
+         AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
+       GROUP BY f.company_cik, f.accession_number
+     )
+     SELECT c.ticker, c.name AS company_name, bc.buyers::text, pc.total_value::text
+     FROM (SELECT company_cik, SUM(value) AS total_value FROM buys GROUP BY company_cik) pc
+     JOIN (SELECT b.company_cik, COUNT(DISTINCT fo.insider_cik) AS buyers
+           FROM buys b JOIN filing_owners fo ON fo.accession_number = b.accession_number
+           GROUP BY b.company_cik) bc ON bc.company_cik = pc.company_cik
+     JOIN companies c ON c.cik = pc.company_cik
+     WHERE c.ticker IS NOT NULL
+     ORDER BY bc.buyers DESC, pc.total_value DESC NULLS LAST
+     LIMIT $2`,
+    [days, limit],
+  );
+}
+
 export interface DailyFlow {
   day: string;
   buy_value: string;
