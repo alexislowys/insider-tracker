@@ -15,10 +15,21 @@ export interface Db {
   close(): Promise<void>;
 }
 
-let instance: Db | null = null;
+// Survive dev-server hot reloads: module-level state is reset on HMR, and a
+// second PGlite on the same data dir aborts. globalThis persists.
+const g = globalThis as typeof globalThis & { __insiderDb?: Db | Promise<Db> };
 
 export async function getDb(): Promise<Db> {
-  if (instance) return instance;
+  if (g.__insiderDb) return g.__insiderDb;
+  const pending = init();
+  g.__insiderDb = pending; // synchronous set — concurrent callers share one init
+  const db = await pending;
+  g.__insiderDb = db;
+  return db;
+}
+
+async function init(): Promise<Db> {
+  let instance: Db;
 
   if (process.env.DATABASE_URL) {
     const { Pool } = await import("pg");

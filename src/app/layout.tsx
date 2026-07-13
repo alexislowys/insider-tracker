@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { SearchBox } from "@/components/SearchBox";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,19 +41,7 @@ export default function RootLayout({
                 Screener
               </Link>
             </div>
-            <form action="/search" className="flex items-center gap-2">
-              <input
-                name="q"
-                placeholder="Ticker, e.g. NVDA"
-                className="w-44 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm hover:bg-zinc-700"
-              >
-                Go
-              </button>
-            </form>
+            <SearchBox />
           </div>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">

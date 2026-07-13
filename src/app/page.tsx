@@ -2,6 +2,7 @@ import Link from "next/link";
 import { clusterBuys, mostBoughtTickers, recentTrades, topBuys } from "@/lib/queries";
 import { fmtValue } from "@/lib/format";
 import { TradeTable } from "@/components/TradeTable";
+import { AutoRefresh } from "@/components/AutoRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-10">
+      <AutoRefresh seconds={60} />
       <section>
         <h2 className="mb-1 text-xl font-semibold">Cluster buys</h2>
         <p className="mb-4 text-sm text-zinc-500">
