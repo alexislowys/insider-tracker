@@ -81,13 +81,14 @@ async function ingestFiling(db: Db, ref: FilingRef): Promise<void> {
   );
 
   await db.query(
-    `INSERT INTO filings (accession_number, company_cik, filed_date, period_of_report)
-     VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+    `INSERT INTO filings (accession_number, company_cik, filed_date, period_of_report, is_10b5_1)
+     VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
     [
       filing.accessionNumber,
       filing.issuerCik,
       ref.dateFiled,
       filing.periodOfReport || null,
+      filing.is10b51,
     ],
   );
 

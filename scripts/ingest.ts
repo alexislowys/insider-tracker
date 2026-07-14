@@ -16,6 +16,15 @@ async function main() {
   const limit = arg("limit") ?? Infinity;
   const db = await getDb();
 
+  // Concurrent ingests double-insert transactions — refuse to run in parallel
+  const [lock] = await db.query<{ locked: boolean }>(
+    `SELECT pg_try_advisory_lock(721) AS locked`,
+  );
+  if (!lock.locked) {
+    console.error("Another ingest holds the lock — exiting.");
+    process.exit(1);
+  }
+
   const day = new Date();
   for (let i = 0; i < days; i++) {
     day.setUTCDate(day.getUTCDate() - 1);

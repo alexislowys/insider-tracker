@@ -124,6 +124,15 @@ describe("parseForm4", () => {
     expect(f.transactions).toHaveLength(1);
   });
 
+  it("reads the Rule 10b5-1 plan checkbox", () => {
+    const xml = form4Xml({ nonDeriv: BUY_TX }).replace(
+      "</periodOfReport>",
+      "</periodOfReport><aff10b5One>1</aff10b5One>",
+    );
+    expect(parseForm4(xml, "acc-10").is10b51).toBe(true);
+    expect(parseForm4(form4Xml({ nonDeriv: BUY_TX }), "acc-11").is10b51).toBe(false);
+  });
+
   it("throws on non-Form-4 XML", () => {
     expect(() => parseForm4("<html>rate limited</html>", "acc-9")).toThrow("acc-9");
   });

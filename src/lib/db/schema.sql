@@ -14,8 +14,11 @@ CREATE TABLE IF NOT EXISTS filings (
   accession_number TEXT PRIMARY KEY,
   company_cik TEXT NOT NULL REFERENCES companies (cik),
   filed_date DATE NOT NULL,
-  period_of_report DATE
+  period_of_report DATE,
+  -- NULL = filed before the flag existed here (unknown); TRUE = 10b5-1 plan
+  is_10b5_1 BOOLEAN
 );
+ALTER TABLE filings ADD COLUMN IF NOT EXISTS is_10b5_1 BOOLEAN;
 CREATE INDEX IF NOT EXISTS idx_filings_company_date ON filings (company_cik, filed_date);
 
 CREATE TABLE IF NOT EXISTS filing_owners (

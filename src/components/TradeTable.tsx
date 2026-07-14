@@ -74,6 +74,14 @@ export function TradeTable({
               <td className="py-2 pr-4 text-zinc-400">{roleLabel(r)}</td>
               <td className="py-2 pr-4">
                 <CodeBadge code={r.code} />
+                {r.is_10b5_1 && (
+                  <span
+                    className="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-400"
+                    title="Executed under a pre-arranged Rule 10b5-1 trading plan — scheduled, not a conviction trade"
+                  >
+                    Planned
+                  </span>
+                )}
               </td>
               <td className="py-2 pr-4 text-right tabular-nums">{fmtShares(r.shares)}</td>
               <td className="py-2 pr-4 text-right tabular-nums">{fmtPrice(r.price_per_share)}</td>

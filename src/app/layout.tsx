@@ -40,6 +40,12 @@ export default function RootLayout({
               <Link href="/screener" className="text-sm text-zinc-400 hover:text-zinc-100">
                 Screener
               </Link>
+              <Link href="/insights" className="text-sm text-zinc-400 hover:text-zinc-100">
+                Insights
+              </Link>
+              <Link href="/watchlist" className="text-sm text-zinc-400 hover:text-zinc-100">
+                Watchlist
+              </Link>
             </div>
             <SearchBox />
           </div>

@@ -31,6 +31,8 @@ export interface Form4Filing {
   issuerName: string;
   ticker: string | null;
   periodOfReport: string;
+  /** Rule 10b5-1 checkbox: trade executed under a pre-arranged plan */
+  is10b51: boolean;
   owners: Form4Owner[];
   transactions: Form4Transaction[];
 }
@@ -145,6 +147,7 @@ export function parseForm4(xml: string, accessionNumber: string): Form4Filing {
     ticker,
     // Some filers append a TZ offset ("2026-06-30-05:00") — keep the date only
     periodOfReport: (val(doc.periodOfReport) ?? "").slice(0, 10),
+    is10b51: bool(doc.aff10b5One),
     owners,
     transactions,
   };

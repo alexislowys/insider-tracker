@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { companyActivity, companyByTicker } from "@/lib/queries";
 import { TradeTable } from "@/components/TradeTable";
 import { AlertForm } from "@/components/AlertForm";
+import { WatchButton } from "@/components/WatchButton";
 import { PriceChart } from "@/components/PriceChart";
 import { getDb } from "@/lib/db";
 import { getDailyCloses } from "@/lib/prices";
@@ -32,7 +33,8 @@ export default async function CompanyPage({
             {company.name}
           </span>
         </h1>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <WatchButton ticker={company.ticker} />
           <AlertForm ticker={company.ticker} />
         </div>
       </div>

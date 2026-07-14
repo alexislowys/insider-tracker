@@ -14,6 +14,7 @@ export interface ActivityRow {
   is_ten_percent_owner: boolean;
   transaction_date: string;
   code: string;
+  is_10b5_1: boolean | null;
   shares: string | null;
   price_per_share: string | null;
   value: string | null;
@@ -23,6 +24,7 @@ const ACTIVITY_SELECT = `
   SELECT f.accession_number, c.ticker, c.name AS company_name, c.cik AS company_cik,
          i.name AS insider_name, i.cik AS insider_cik,
          fo.officer_title, fo.is_director, fo.is_ten_percent_owner,
+         f.is_10b5_1,
          t.transaction_date::text, t.code, t.shares::text,
          t.price_per_share::text,
          (t.shares * t.price_per_share)::text AS value
@@ -69,6 +71,7 @@ export async function clusterBuys(days = 14): Promise<ClusterBuy[]> {
        FROM transactions t
        JOIN filings f ON f.accession_number = t.accession_number
        WHERE t.code = 'P' AND t.is_derivative = FALSE
+         AND f.is_10b5_1 IS NOT TRUE
          AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
        GROUP BY f.company_cik, f.accession_number
      ),

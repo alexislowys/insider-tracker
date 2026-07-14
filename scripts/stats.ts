@@ -11,7 +11,9 @@ async function main() {
        shares_owned_after, direct_ownership
      HAVING COUNT(*) > 1`,
   );
-  console.log(`duplicate transaction rows: ${dupes.length}`);
+  // NB: identical rows can be legit — filers split one trade into equal lots.
+  // Only worry if this jumps after an ingest change (see scripts/repair-dupes.ts).
+  console.log(`repeated identical transaction groups (often legit lots): ${dupes.length}`);
 
   const sells = await db.query(
     `SELECT c.ticker, i.name, fo.officer_title, t.code, t.shares, t.price_per_share
