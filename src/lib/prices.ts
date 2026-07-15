@@ -68,11 +68,20 @@ export async function getDailyCloses(
 
   const range = days <= 190 ? "6mo" : "2y";
   const fresh = await fetchFromYahoo(t, range);
-  for (const p of fresh) {
+  // One multi-row INSERT per ticker — row-by-row over a remote pool is ~20ms
+  // each, which blows serverless time budgets (180 closes × 60 tickers)
+  for (let i = 0; i < fresh.length; i += 200) {
+    const chunk = fresh.slice(i, i + 200);
+    const values: string[] = [];
+    const params: unknown[] = [];
+    for (const p of chunk) {
+      params.push(t, p.date, p.close);
+      values.push(`($${params.length - 2}, $${params.length - 1}, $${params.length})`);
+    }
     await db.query(
-      `INSERT INTO prices (ticker, date, close) VALUES ($1, $2, $3)
+      `INSERT INTO prices (ticker, date, close) VALUES ${values.join(",")}
        ON CONFLICT (ticker, date) DO UPDATE SET close = EXCLUDED.close`,
-      [t, p.date, p.close],
+      params,
     );
   }
   if (fresh.length === 0 && cached.length > 0) {

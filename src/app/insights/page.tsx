@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db";
-import {
-  outcomesByRole,
-  overallOutcomes,
-  topInsiders,
-  warmPriceCoverage,
-} from "@/lib/insights";
+import { outcomesByRole, overallOutcomes, topInsiders } from "@/lib/insights";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +14,8 @@ function tone(s: string): string {
 }
 
 export default async function InsightsPage() {
+  // Prices are warmed by the daily cron; this page reads the cache only
   const db = await getDb();
-  await warmPriceCoverage(db);
   const [overall, roles, leaders] = await Promise.all([
     overallOutcomes(db),
     outcomesByRole(db),

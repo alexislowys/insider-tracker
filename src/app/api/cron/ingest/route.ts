@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { ingestDay } from "@/lib/ingest";
 import { dispatchAlerts } from "@/lib/alerts";
+import { warmPriceCoverage } from "@/lib/insights";
 
 export const maxDuration = 300;
 
@@ -24,5 +25,6 @@ export async function GET(req: NextRequest) {
     results.push({ day: day.toISOString().slice(0, 10), ...stats });
   }
   const alerts = await dispatchAlerts(db);
+  await warmPriceCoverage(db); // keeps /insights and charts fresh
   return NextResponse.json({ results, alerts });
 }
