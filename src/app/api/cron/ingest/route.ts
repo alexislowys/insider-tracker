@@ -17,14 +17,25 @@ export async function GET(req: NextRequest) {
   }
 
   const db = await getDb();
-  const results = [];
-  const day = new Date();
-  for (let i = 0; i < 3; i++) {
-    day.setUTCDate(day.getUTCDate() - 1);
-    const stats = await ingestDay(db, day);
-    results.push({ day: day.toISOString().slice(0, 10), ...stats });
+  // Same lock as the poller — concurrent ingests double-insert transactions
+  const [lock] = await db.query<{ locked: boolean }>(
+    `SELECT pg_try_advisory_lock(721) AS locked`,
+  );
+  if (!lock.locked) {
+    return NextResponse.json({ skipped: "another ingest holds the lock" });
   }
-  const alerts = await dispatchAlerts(db);
-  await warmPriceCoverage(db); // keeps /insights and charts fresh
-  return NextResponse.json({ results, alerts });
+  try {
+    const results = [];
+    const day = new Date();
+    for (let i = 0; i < 3; i++) {
+      day.setUTCDate(day.getUTCDate() - 1);
+      const stats = await ingestDay(db, day);
+      results.push({ day: day.toISOString().slice(0, 10), ...stats });
+    }
+    const alerts = await dispatchAlerts(db);
+    await warmPriceCoverage(db); // keeps /insights and charts fresh
+    return NextResponse.json({ results, alerts });
+  } finally {
+    await db.query(`SELECT pg_advisory_unlock(721)`);
+  }
 }
