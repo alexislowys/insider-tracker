@@ -15,6 +15,16 @@ export async function subscribe(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!EMAIL_RE.test(email)) return { ok: false, error: "Invalid email" };
 
+  // Abuse cap: one address can't be signed up for an unbounded number of
+  // tickers (junk-row / email-bomb surface, since there's no double opt-in)
+  const [{ n }] = await db.query<{ n: string }>(
+    `SELECT COUNT(*)::text AS n FROM alert_subscriptions WHERE email = $1`,
+    [email.toLowerCase()],
+  );
+  if (Number(n) >= 50) {
+    return { ok: false, error: "Subscription limit reached for this email" };
+  }
+
   const company = await db.query<{ cik: string }>(
     `SELECT cik FROM companies WHERE ticker = $1`,
     [ticker.toUpperCase()],
