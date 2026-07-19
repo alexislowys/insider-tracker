@@ -7,6 +7,12 @@ import { TradeTable } from "@/components/TradeTable";
 
 export const revalidate = 120;
 
+// Empty list + dynamicParams (default true) = on-demand ISR: each ticker
+// renders on first visit, then the CDN serves it for the revalidate window
+export function generateStaticParams() {
+  return [];
+}
+
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">

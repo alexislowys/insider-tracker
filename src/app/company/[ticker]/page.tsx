@@ -9,6 +9,12 @@ import { getDailyCloses } from "@/lib/prices";
 
 export const revalidate = 120;
 
+// Empty list + dynamicParams (default true) = on-demand ISR: each ticker
+// renders on first visit, then the CDN serves it for the revalidate window
+export function generateStaticParams() {
+  return [];
+}
+
 export default async function CompanyPage({
   params,
 }: {
