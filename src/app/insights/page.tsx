@@ -33,29 +33,36 @@ export default async function InsightsPage() {
       </div>
 
       {overall ? (
-        <section className="grid gap-3 sm:grid-cols-4">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Buys scored</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">{overall.buys}</p>
-          </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Tickers</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">{overall.tickers}</p>
-          </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Avg return</p>
-            <p className={`mt-1 text-xl font-semibold tabular-nums ${overall.avgReturnPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-              {overall.avgReturnPct > 0 ? "+" : ""}
-              {overall.avgReturnPct}%
-            </p>
-          </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Win rate</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums">
-              {Math.round(overall.winRate * 100)}%
-            </p>
-          </div>
-        </section>
+        <>
+          <section className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Buys scored</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{overall.buys}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Tickers</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{overall.tickers}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Median return</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${overall.medianReturnPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                {overall.medianReturnPct > 0 ? "+" : ""}
+                {overall.medianReturnPct}%
+              </p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Win rate</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">
+                {Math.round(overall.winRate * 100)}%
+              </p>
+            </div>
+          </section>
+          <p className="text-xs text-zinc-600">
+            Median is the headline because a few microcap moonshots inflate the
+            average to {overall.avgReturnPct > 0 ? "+" : ""}
+            {overall.avgReturnPct}% — median shows the typical buy.
+          </p>
+        </>
       ) : (
         <p className="text-sm text-zinc-500">Not enough priced buys yet.</p>
       )}
@@ -68,7 +75,7 @@ export default async function InsightsPage() {
               <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
                 <th className="py-2 pr-4">Role</th>
                 <th className="py-2 pr-4 text-right">Buys</th>
-                <th className="py-2 pr-4 text-right">Avg return</th>
+                <th className="py-2 pr-4 text-right">Median return</th>
                 <th className="py-2 text-right">Win rate</th>
               </tr>
             </thead>
@@ -77,8 +84,8 @@ export default async function InsightsPage() {
                 <tr key={r.role} className="border-b border-zinc-900">
                   <td className="py-2 pr-4">{r.role}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{r.buys}</td>
-                  <td className={`py-2 pr-4 text-right font-medium tabular-nums ${tone(r.avg_ret)}`}>
-                    {pct(r.avg_ret)}
+                  <td className={`py-2 pr-4 text-right font-medium tabular-nums ${tone(r.median_ret)}`}>
+                    {pct(r.median_ret)}
                   </td>
                   <td className="py-2 text-right tabular-nums">
                     {Math.round(Number(r.win_rate) * 100)}%
@@ -93,7 +100,7 @@ export default async function InsightsPage() {
       <section>
         <h2 className="mb-1 text-xl font-semibold">Best insiders to follow</h2>
         <p className="mb-4 text-sm text-zinc-500">
-          Ranked by average return across their buys (min 2 scored buys).
+          Ranked by median return across their buys (min 3 scored buys).
         </p>
         <ol className="max-w-xl space-y-2">
           {leaders.map((l, i) => (
@@ -107,8 +114,8 @@ export default async function InsightsPage() {
                   {l.insider_name}
                   <span className="ml-2 text-xs text-zinc-500">{l.buys} buys</span>
                 </span>
-                <span className={`font-medium tabular-nums ${tone(l.avg_ret)}`}>
-                  {pct(l.avg_ret)}
+                <span className={`font-medium tabular-nums ${tone(l.median_ret)}`}>
+                  {pct(l.median_ret)}
                 </span>
               </Link>
             </li>

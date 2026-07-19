@@ -30,7 +30,8 @@ export async function warmPriceCoverage(db: Db): Promise<void> {
 export interface OutcomeStats {
   buys: number;
   tickers: number;
-  avgReturnPct: number;
+  medianReturnPct: number; // headline — robust to penny-stock outliers
+  avgReturnPct: number; // shown as secondary; skewed by microcap moonshots
   winRate: number;
 }
 
@@ -56,11 +57,13 @@ export async function overallOutcomes(db: Db): Promise<OutcomeStats | null> {
   const [row] = await db.query<{
     buys: string;
     tickers: string;
+    median_ret: string;
     avg_ret: string;
     win_rate: string;
   }>(
     `${OUTCOME_BASE}
      SELECT COUNT(*)::text AS buys, COUNT(DISTINCT ticker)::text AS tickers,
+            ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret)::numeric, 1)::text AS median_ret,
             ROUND(AVG(ret)::numeric, 1)::text AS avg_ret,
             ROUND(AVG(CASE WHEN ret > 0 THEN 1 ELSE 0 END)::numeric, 2)::text AS win_rate
      FROM scored`,
@@ -69,6 +72,7 @@ export async function overallOutcomes(db: Db): Promise<OutcomeStats | null> {
   return {
     buys: Number(row.buys),
     tickers: Number(row.tickers),
+    medianReturnPct: Number(row.median_ret),
     avgReturnPct: Number(row.avg_ret),
     winRate: Number(row.win_rate),
   };
@@ -77,7 +81,7 @@ export async function overallOutcomes(db: Db): Promise<OutcomeStats | null> {
 export interface RoleOutcome {
   role: string;
   buys: string;
-  avg_ret: string;
+  median_ret: string;
   win_rate: string;
 }
 
@@ -85,7 +89,7 @@ export async function outcomesByRole(db: Db): Promise<RoleOutcome[]> {
   return db.query<RoleOutcome>(
     `${OUTCOME_BASE}
      SELECT role, COUNT(*)::text AS buys,
-            ROUND(AVG(ret)::numeric, 1)::text AS avg_ret,
+            ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret)::numeric, 1)::text AS median_ret,
             ROUND(AVG(CASE WHEN ret > 0 THEN 1 ELSE 0 END)::numeric, 2)::text AS win_rate
      FROM (
        SELECT ret,
@@ -96,7 +100,7 @@ export async function outcomesByRole(db: Db): Promise<RoleOutcome[]> {
        FROM scored
      ) s
      GROUP BY role
-     ORDER BY AVG(ret) DESC`,
+     ORDER BY PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret) DESC`,
   );
 }
 
@@ -104,19 +108,21 @@ export interface InsiderLeader {
   insider_cik: string;
   insider_name: string;
   buys: string;
-  avg_ret: string;
+  median_ret: string;
 }
 
 export async function topInsiders(db: Db, limit = 10): Promise<InsiderLeader[]> {
+  // Median + min 3 buys: one penny-stock moonshot can't crown someone with
+  // two lucky trades the way an average would
   return db.query<InsiderLeader>(
     `${OUTCOME_BASE}
      SELECT insider_cik, MAX(insider_name) AS insider_name,
             COUNT(*)::text AS buys,
-            ROUND(AVG(ret)::numeric, 1)::text AS avg_ret
+            ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret)::numeric, 1)::text AS median_ret
      FROM scored
      GROUP BY insider_cik
-     HAVING COUNT(*) >= 2
-     ORDER BY AVG(ret) DESC
+     HAVING COUNT(*) >= 3
+     ORDER BY PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret) DESC
      LIMIT $1`,
     [limit],
   );

@@ -17,7 +17,7 @@ export function AlertForm({ ticker }: { ticker: string }) {
     });
     if (res.ok) {
       setState("done");
-      setMessage(`Alerts on for ${ticker}.`);
+      setMessage(`Check your email to confirm alerts for ${ticker}.`);
     } else {
       setState("error");
       setMessage((await res.json()).error ?? "Something went wrong");

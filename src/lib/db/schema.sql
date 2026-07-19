@@ -61,9 +61,12 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
   email TEXT NOT NULL,
   company_cik TEXT NOT NULL REFERENCES companies (cik),
   token TEXT NOT NULL UNIQUE,
+  -- Double opt-in: alerts only fire once the address confirms via email link
+  confirmed BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (email, company_cik)
 );
+ALTER TABLE alert_subscriptions ADD COLUMN IF NOT EXISTS confirmed BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- One row per alert actually sent; the PK prevents double-notifying
 CREATE TABLE IF NOT EXISTS alert_notifications (
