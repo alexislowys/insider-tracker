@@ -7,7 +7,7 @@ import { PriceChart } from "@/components/PriceChart";
 import { getDb } from "@/lib/db";
 import { getDailyCloses } from "@/lib/prices";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function CompanyPage({
   params,

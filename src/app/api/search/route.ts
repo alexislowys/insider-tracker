@@ -14,5 +14,8 @@ export async function GET(req: NextRequest) {
      LIMIT 8`,
     [q],
   );
-  return NextResponse.json(rows);
+  return NextResponse.json(rows, {
+    // Same-prefix searches from many users share one CDN-cached response
+    headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" },
+  });
 }

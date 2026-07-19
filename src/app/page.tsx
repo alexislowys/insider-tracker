@@ -4,7 +4,9 @@ import { fmtValue } from "@/lib/format";
 import { TradeTable } from "@/components/TradeTable";
 import { AutoRefresh } from "@/components/AutoRefresh";
 
-export const dynamic = "force-dynamic";
+// ISR: CDN serves cached HTML, re-rendered at most once/min — data
+// changes every 5 min via the poller, so users never see stale-by-much
+export const revalidate = 60;
 
 export default async function Home() {
   const [clusters, trades, biggest, hottest] = await Promise.all([

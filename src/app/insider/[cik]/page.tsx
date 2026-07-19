@@ -5,7 +5,7 @@ import { insiderTrackRecord } from "@/lib/track-record";
 import { getDb } from "@/lib/db";
 import { TradeTable } from "@/components/TradeTable";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
