@@ -33,7 +33,7 @@ export function SearchBox() {
         list="ticker-options"
         placeholder="Ticker or company"
         autoComplete="off"
-        className="w-48 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
+        className="w-40 sm:w-48 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm placeholder:text-zinc-600 focus:border-zinc-600 focus:outline-none"
       />
       <datalist id="ticker-options">
         {options.map((o) => (
