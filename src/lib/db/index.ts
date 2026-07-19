@@ -34,6 +34,9 @@ async function init(): Promise<Db> {
   if (process.env.DATABASE_URL) {
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    // Neon closes idle pooled connections; without a listener that error
+    // event crashes the whole process (long-running scripts especially)
+    pool.on("error", (e) => console.error(`[pg pool] ${e.message}`));
     instance = {
       async query<T>(text: string, params?: unknown[]) {
         const res = await pool.query(text, params);
