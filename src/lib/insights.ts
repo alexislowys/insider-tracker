@@ -135,21 +135,25 @@ export interface InsiderLeader {
   insider_cik: string;
   insider_name: string;
   buys: string;
+  tickers: string;
   median_ret: string;
 }
 
 export async function topInsiders(db: Db, limit = 10): Promise<InsiderLeader[]> {
-  // Median + min 3 buys: one penny-stock moonshot can't crown someone with
-  // two lucky trades the way an average would
+  // Rank by median MARKET-ADJUSTED return, and require 4+ buys across 2+
+  // distinct tickers: this kills the "3 buys of one penny stock that 25x'd"
+  // artifact that otherwise crowns a lucky single-name bet as a top insider.
   return db.query<InsiderLeader>(
     `${OUTCOME_BASE}
      SELECT insider_cik, MAX(insider_name) AS insider_name,
             COUNT(*)::text AS buys,
-            ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret)::numeric, 1)::text AS median_ret
+            COUNT(DISTINCT ticker)::text AS tickers,
+            ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY mkt_ret)::numeric, 1)::text AS median_ret
      FROM scored
+     WHERE mkt_ret IS NOT NULL
      GROUP BY insider_cik
-     HAVING COUNT(*) >= 3
-     ORDER BY PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ret) DESC
+     HAVING COUNT(*) >= 4 AND COUNT(DISTINCT ticker) >= 2
+     ORDER BY PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY mkt_ret) DESC
      LIMIT $1`,
     [limit],
   );

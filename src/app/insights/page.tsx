@@ -111,7 +111,8 @@ export default async function InsightsPage() {
       <section>
         <h2 className="mb-1 text-xl font-semibold">Best insiders to follow</h2>
         <p className="mb-4 text-sm text-zinc-500">
-          Ranked by median return across their buys (min 3 scored buys).
+          Ranked by median return vs the S&amp;P 500, minimum 4 buys across 2+
+          tickers — so one lucky single-stock bet can&apos;t top the list.
         </p>
         <ol className="max-w-xl space-y-2">
           {leaders.map((l, i) => (
@@ -123,7 +124,9 @@ export default async function InsightsPage() {
                 <span>
                   <span className="mr-2 text-xs text-zinc-600">#{i + 1}</span>
                   {l.insider_name}
-                  <span className="ml-2 text-xs text-zinc-500">{l.buys} buys</span>
+                  <span className="ml-2 text-xs text-zinc-500">
+                    {l.buys} buys · {l.tickers} tickers
+                  </span>
                 </span>
                 <span className={`font-medium tabular-nums ${tone(l.median_ret)}`}>
                   {pct(l.median_ret)}
