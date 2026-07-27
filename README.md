@@ -10,6 +10,17 @@ Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, 
 - **Insider pages** — full transaction history for any executive or director
 - **Self-healing daily ingestion** — Vercel Cron re-ingests a 3-day window each weekday; ingestion is idempotent so overlaps and reruns are free
 
+## Signal evaluation
+
+Track-record stats are designed to resist the obvious abuses:
+
+- **Median return, not mean** — headline insider stats use the median; a single microcap moonshot shouldn't mint a "top insider." The mean is shown as labeled context.
+- **Minimum 3 buys** before an insider gets a track record — no single-trade heroes.
+- **10b5-1 planned trades flagged** — scheduled sales carry no information; they're marked so signal readers can exclude them.
+- **Win rate** = share of buys positive at the measurement horizon, shown alongside return so a 90%-win/tiny-gain profile is distinguishable from lottery tickets.
+
+Limitations, honestly: returns are unadjusted for market beta, there's no survivorship handling for delistings, and the horizon is fixed. This is a screening tool, not a backtest.
+
 ## Architecture
 
 ```
