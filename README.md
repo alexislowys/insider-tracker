@@ -23,6 +23,7 @@ Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, 
 Track-record stats are designed to resist the obvious abuses:
 
 - **Median return, not mean** — headline insider stats use the median; a single microcap moonshot shouldn't mint a "top insider." The mean is shown as labeled context.
+- **Market-adjusted returns** — each buy is also scored against SPY over its exact holding period, so a rising tide isn't mistaken for skill. The dashboard reports the median excess return vs the S&P 500 and the share of buys that beat it.
 - **Minimum 3 buys** before an insider gets a track record — no single-trade heroes.
 - **10b5-1 planned trades flagged** — scheduled sales carry no information; they're marked so signal readers can exclude them.
 - **Win rate** = share of buys positive at the measurement horizon, shown alongside return so a 90%-win/tiny-gain profile is distinguishable from lottery tickets.

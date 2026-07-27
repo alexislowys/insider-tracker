@@ -36,18 +36,26 @@ export default async function InsightsPage() {
         <>
           <section className="grid gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">Buys scored</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">{overall.buys}</p>
-            </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-zinc-500">Tickers</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums">{overall.tickers}</p>
-            </div>
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-zinc-500">Median return</p>
               <p className={`mt-1 text-xl font-semibold tabular-nums ${overall.medianReturnPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                 {overall.medianReturnPct > 0 ? "+" : ""}
                 {overall.medianReturnPct}%
+              </p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">vs S&amp;P 500</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${(overall.medianMktReturnPct ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                {overall.medianMktReturnPct == null
+                  ? "—"
+                  : `${overall.medianMktReturnPct > 0 ? "+" : ""}${overall.medianMktReturnPct}%`}
+              </p>
+            </div>
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Beat the market</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">
+                {overall.beatMarketRate == null
+                  ? "—"
+                  : `${Math.round(overall.beatMarketRate * 100)}%`}
               </p>
             </div>
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
@@ -58,9 +66,12 @@ export default async function InsightsPage() {
             </div>
           </section>
           <p className="text-xs text-zinc-600">
-            Median is the headline because a few microcap moonshots inflate the
-            average to {overall.avgReturnPct > 0 ? "+" : ""}
-            {overall.avgReturnPct}% — median shows the typical buy.
+            {overall.buys} buys across {overall.tickers} tickers.{" "}
+            <span className="text-zinc-500">vs S&amp;P 500</span> subtracts the
+            index&apos;s return over each buy&apos;s exact holding period — the
+            honest test of whether insider buying beats just owning the market.
+            Median used throughout (mean is {overall.avgReturnPct > 0 ? "+" : ""}
+            {overall.avgReturnPct}%, skewed by microcap moonshots).
           </p>
         </>
       ) : (
