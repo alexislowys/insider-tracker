@@ -34,7 +34,7 @@ export default async function InsightsPage() {
 
       {overall ? (
         <>
-          <section className="grid gap-3 sm:grid-cols-4">
+          <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-zinc-500">Median return</p>
               <p className={`mt-1 text-xl font-semibold tabular-nums ${overall.medianReturnPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>

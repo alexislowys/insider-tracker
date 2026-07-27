@@ -50,7 +50,7 @@ export default function RootLayout({
             <SearchBox />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        <main className="mx-auto w-full max-w-5xl flex-1 overflow-x-hidden px-4 py-8">
           {children}
         </main>
         <footer className="mx-auto w-full max-w-5xl px-4 pb-6 text-xs text-zinc-600">

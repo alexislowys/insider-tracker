@@ -41,7 +41,7 @@ export default async function Home() {
             No cluster buys in the ingested window yet.
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {clusters.map((c) => (
               <Link
                 key={c.company_cik}
@@ -65,7 +65,7 @@ export default async function Home() {
         )}
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section>
           <h2 className="mb-1 text-xl font-semibold">Biggest buys — 7 days</h2>
           <p className="mb-4 text-sm text-zinc-500">Largest single open-market purchases.</p>
