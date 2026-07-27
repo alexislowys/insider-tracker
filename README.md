@@ -6,7 +6,7 @@
 
 Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, and executive activity. Built with Next.js, PostgreSQL, and the SEC EDGAR API.
 
-**▶ Live: [insider-tracker-three.vercel.app](https://insider-tracker-three.vercel.app)**
+**▶ Live: [insider-tracker-three.vercel.app](https://insider-tracker-three.vercel.app)** · **📄 [Engineering case study](docs/CASE_STUDY.md)**
 
 ![Insider Tracker demo](docs/demo.gif)
 
