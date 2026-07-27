@@ -19,14 +19,15 @@ export default async function Home() {
   return (
     <div className="space-y-10">
       <AutoRefresh seconds={60} />
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-        <p className="text-sm text-zinc-300">
-          <span className="font-medium text-zinc-100">
-            Company insiders — CEOs, directors, big shareholders — must report
-            trades in their own stock to the SEC.
-          </span>{" "}
-          When several buy at once, it often signals confidence. This tracks
-          every filing and surfaces the ones that matter.
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-4">
+        <h1 className="text-lg font-semibold text-zinc-100">
+          Insider trading signals from SEC Form 4 filings
+        </h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          Company insiders — CEOs, directors, big shareholders — must report
+          trades in their own stock to the SEC. When several buy at once, it
+          often signals confidence. This tracks every filing and surfaces the
+          ones that matter.
         </p>
       </section>
       <section>

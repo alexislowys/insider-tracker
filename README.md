@@ -1,6 +1,14 @@
 # Insider Tracker
 
+[![CI](https://github.com/alexislowys/insider-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/alexislowys/insider-tracker/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/demo-insider--tracker-000?logo=vercel)](https://insider-tracker-three.vercel.app)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, and executive activity. Built with Next.js, PostgreSQL, and the SEC EDGAR API.
+
+**▶ Live: [insider-tracker-three.vercel.app](https://insider-tracker-three.vercel.app)**
+
+![Insider Tracker dashboard](docs/screenshot.png)
 
 ## Features
 
