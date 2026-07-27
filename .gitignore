@@ -42,3 +42,8 @@ next-env.d.ts
 .pglite/
 .pglite-preview/
 .cron-secret.local
+
+# AI assistant config — local only
+.claude/
+CLAUDE.md
+AGENTS.md
