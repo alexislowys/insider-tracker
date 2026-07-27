@@ -55,7 +55,7 @@ const OUTCOME_BASE = `
     SELECT c.ticker, i.cik AS insider_cik, i.name AS insider_name,
            fo.is_officer, fo.is_director, fo.is_ten_percent_owner,
            (l.close - t.price_per_share) / t.price_per_share * 100 AS ret,
-           CASE WHEN spy_buy.close IS NOT NULL THEN
+           CASE WHEN spy_buy.close IS NOT NULL AND sl.close IS NOT NULL THEN
              ((l.close / t.price_per_share) - (sl.close / spy_buy.close)) * 100
            END AS mkt_ret
     FROM transactions t
@@ -64,7 +64,8 @@ const OUTCOME_BASE = `
     JOIN latest l ON l.ticker = c.ticker
     JOIN filing_owners fo ON fo.accession_number = f.accession_number
     JOIN insiders i ON i.cik = fo.insider_cik
-    CROSS JOIN spy_latest sl
+    -- LEFT (not CROSS) so a missing SPY cache yields NULL mkt_ret, never zero rows
+    LEFT JOIN spy_latest sl ON TRUE
     LEFT JOIN LATERAL (
       SELECT close FROM prices
       WHERE ticker = 'SPY' AND date <= t.transaction_date
