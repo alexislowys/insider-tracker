@@ -8,7 +8,7 @@ Track SEC Form 4 insider buys and sells: cluster-buy signals, per-company flow, 
 
 **▶ Live: [insider-tracker-three.vercel.app](https://insider-tracker-three.vercel.app)**
 
-![Insider Tracker dashboard](docs/screenshot.png)
+![Insider Tracker demo](docs/demo.gif)
 
 ## Features
 
