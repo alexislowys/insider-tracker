@@ -34,7 +34,9 @@ export async function edgarFetch(url: string, retries = 3): Promise<Response> {
     }
     throw e;
   }
-  if ((res.status === 429 || res.status === 503) && retries > 0) {
+  // Retry the transient statuses: rate-limit (429) and the 5xx gateway/overload
+  // family (500/502/503/504) EDGAR throws under load
+  if ([429, 500, 502, 503, 504].includes(res.status) && retries > 0) {
     await new Promise((r) => setTimeout(r, 2000 * (4 - retries)));
     return edgarFetch(url, retries - 1);
   }

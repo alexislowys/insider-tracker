@@ -113,6 +113,15 @@ async function ingestFiling(db: Db, ref: FilingRef): Promise<void> {
     );
   }
 
+  // Transactions have no natural unique key (an insider can legitimately buy
+  // the same shares at the same price in two lots), so a plain INSERT would
+  // duplicate if this filing is ever re-processed. Companies/insiders/filings/
+  // owners are all ON CONFLICT-safe; make transactions idempotent per filing by
+  // clearing any prior rows for this accession first. New filing → no-op;
+  // re-run → replace. Closes the double-insert window regardless of the lock.
+  await db.query(`DELETE FROM transactions WHERE accession_number = $1`, [
+    filing.accessionNumber,
+  ]);
   for (const tx of filing.transactions) {
     await db.query(
       `INSERT INTO transactions

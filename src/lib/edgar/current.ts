@@ -11,7 +11,15 @@ const FEED_URL =
   "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&company=&dateb=&owner=include&count=100&output=atom";
 
 export async function listCurrentForm4Filings(): Promise<FilingRef[]> {
-  const xml = await edgarText(FEED_URL);
+  // EDGAR intermittently 403s/500s or serves an interstitial. Treat any fetch
+  // failure as "no new filings this run" — the next poll a minute later retries.
+  let xml: string;
+  try {
+    xml = await edgarText(FEED_URL);
+  } catch (e) {
+    console.error(`[edgar] current feed unavailable: ${e instanceof Error ? e.message : e}`);
+    return [];
+  }
   const seen = new Set<string>();
   const refs: FilingRef[] = [];
 

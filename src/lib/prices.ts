@@ -23,12 +23,21 @@ async function fetchFromYahoo(ticker: string, range: string): Promise<DailyClose
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
     ticker,
   )}?range=${range}&interval=1d`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (InsiderTracker)" },
-  });
-  if (!res.ok) return []; // unknown/delisted ticker — chart just won't render
-  const data = (await res.json()) as YahooChart;
-  const result = data.chart.result?.[0];
+  // Yahoo is an unofficial endpoint: it can reject the connection, hang, 200
+  // with an HTML rate-limit page, or return an unexpected shape. Any of those
+  // must degrade to [] (→ stale-cache fallback), never throw and 500 a caller.
+  let data: YahooChart;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (InsiderTracker)" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return []; // unknown/delisted ticker — chart just won't render
+    data = (await res.json()) as YahooChart;
+  } catch {
+    return [];
+  }
+  const result = data?.chart?.result?.[0];
   if (!result?.timestamp) return [];
 
   const closes = result.indicators.quote[0]?.close ?? [];

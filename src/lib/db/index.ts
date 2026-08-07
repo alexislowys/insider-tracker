@@ -23,9 +23,17 @@ export async function getDb(): Promise<Db> {
   if (g.__insiderDb) return g.__insiderDb;
   const pending = init();
   g.__insiderDb = pending; // synchronous set — concurrent callers share one init
-  const db = await pending;
-  g.__insiderDb = db;
-  return db;
+  try {
+    const db = await pending;
+    g.__insiderDb = db;
+    return db;
+  } catch (e) {
+    // A transient init failure (Neon cold start, ECONNRESET) must NOT leave a
+    // rejected promise cached — that would poison every later call on this warm
+    // serverless instance until it's recycled. Clear it so the next call retries.
+    if (g.__insiderDb === pending) delete g.__insiderDb;
+    throw e;
+  }
 }
 
 async function init(): Promise<Db> {

@@ -28,9 +28,14 @@ export async function listForm4Filings(day: Date): Promise<FilingRef[]> {
   try {
     body = await edgarText(url);
   } catch (e) {
-    // EDGAR answers 403 (not 404) for weekend/holiday index files that don't exist
-    if (e instanceof Error && /EDGAR (403|404)/.test(e.message)) return [];
-    throw e;
+    // 403/404 = weekend/holiday index file that doesn't exist → genuinely empty.
+    // Any other failure (5xx, network, timeout) is transient: treat this day as
+    // empty for now and log it, so one bad day doesn't abort the other days in
+    // the run. The daily cron reruns a 3-day window, so it self-heals.
+    if (!(e instanceof Error && /EDGAR (403|404)/.test(e.message))) {
+      console.error(`[edgar] daily index ${fmt(day)} unavailable: ${e instanceof Error ? e.message : e}`);
+    }
+    return [];
   }
 
   const refs: FilingRef[] = [];
