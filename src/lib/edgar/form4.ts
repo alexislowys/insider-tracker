@@ -106,12 +106,7 @@ export function parseForm4(xml: string, accessionNumber: string): Form4Filing {
   if (!doc) throw new Error(`No ownershipDocument in ${accessionNumber}`);
 
   const issuer = doc.issuer ?? {};
-  const rawTicker = val(issuer.issuerTradingSymbol);
-  // Filers sometimes put "NONE" or "N/A" instead of leaving it blank
-  const ticker =
-    rawTicker && !["NONE", "N/A", "NA"].includes(rawTicker.toUpperCase())
-      ? rawTicker.toUpperCase()
-      : null;
+  const ticker = normalizeTicker(val(issuer.issuerTradingSymbol));
 
   const owners: Form4Owner[] = (doc.reportingOwner ?? []).map(
     (o: Record<string, unknown>) => {
@@ -151,4 +146,25 @@ export function parseForm4(xml: string, accessionNumber: string): Form4Filing {
     owners,
     transactions,
   };
+}
+
+/**
+ * Clean a raw issuerTradingSymbol into a real ticker or null. Filers put all
+ * kinds of junk here: exchange prefixes ("NYSE: KRC"), wrapping quotes/brackets
+ * ('"OMEX"', "[NONE]", "(SIRI)"), placeholders ("NONE"/"N/A"), and multiple
+ * classes ("BFA, BFB", "LEN, LEN.B", "MOGA/MOGB"). Left raw, these render as
+ * broken tickers and dead company pages. Normalize aggressively; null anything
+ * that isn't a clean single symbol.
+ */
+export function normalizeTicker(raw: string | null): string | null {
+  if (!raw) return null;
+  let t = raw.toUpperCase().trim();
+  t = t.replace(/^["'([\]]+/, "").replace(/["')\][]+$/, "").trim(); // wrappers
+  t = t.replace(/^(NYSE\s*MKT|NYSE|NASDAQ|NASD|AMEX|ASX|OTC|CBOE|BATS)\s*[:/]\s*/, "");
+  // Placeholder check BEFORE splitting — else "N/A" splits to "N" and survives
+  if (["NONE", "N/A", "NA", "NULL", "-", ""].includes(t)) return null;
+  t = t.split(/[,;/]+/)[0].trim(); // first class of a multi-symbol field
+  // A real US ticker: letter start, ≤6 alnum, optional .A/.B class suffix.
+  // Anything with leftover spaces or odd chars (e.g. "N O G") fails → null.
+  return /^[A-Z][A-Z0-9]{0,5}(\.[A-Z])?$/.test(t) ? t : null;
 }

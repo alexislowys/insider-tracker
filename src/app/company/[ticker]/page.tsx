@@ -9,6 +9,19 @@ import { getDailyCloses } from "@/lib/prices";
 
 export const revalidate = 120;
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ ticker: string }>;
+}) {
+  const { ticker } = await params;
+  const t = decodeURIComponent(ticker).toUpperCase();
+  return {
+    title: `${t} insider trades`,
+    description: `Insider buys, sells, and cluster signals for ${t} from SEC Form 4 filings.`,
+  };
+}
+
 // Empty list + dynamicParams (default true) = on-demand ISR: each ticker
 // renders on first visit, then the CDN serves it for the revalidate window
 export function generateStaticParams() {

@@ -14,10 +14,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://insider-tracker-three.vercel.app";
+const DESCRIPTION =
+  "Live SEC Form 4 insider-trading signals: cluster buys, market-adjusted return analytics, and executive activity.";
+
 export const metadata: Metadata = {
-  title: "Insider Tracker",
-  description:
-    "SEC Form 4 insider buys and sells, cluster signals, and executive activity",
+  metadataBase: new URL(SITE_URL),
+  // Child pages set just their name; "%s" fills the template
+  title: {
+    default: "Insider Tracker — SEC insider-trading signals",
+    template: "%s · Insider Tracker",
+  },
+  description: DESCRIPTION,
+  openGraph: {
+    title: "Insider Tracker — SEC insider-trading signals",
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Insider Tracker",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Insider Tracker — SEC insider-trading signals",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

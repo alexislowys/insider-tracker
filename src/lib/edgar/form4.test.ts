@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseForm4 } from "./form4";
+import { normalizeTicker, parseForm4 } from "./form4";
 
 function form4Xml(opts: {
   ticker?: string;
@@ -135,5 +135,31 @@ describe("parseForm4", () => {
 
   it("throws on non-Form-4 XML", () => {
     expect(() => parseForm4("<html>rate limited</html>", "acc-9")).toThrow("acc-9");
+  });
+});
+
+describe("normalizeTicker", () => {
+  it("passes clean tickers through, uppercased", () => {
+    expect(normalizeTicker("aapl")).toBe("AAPL");
+    expect(normalizeTicker("BRK.B")).toBe("BRK.B");
+  });
+  it("strips exchange prefixes", () => {
+    expect(normalizeTicker("NYSE: KRC")).toBe("KRC");
+    expect(normalizeTicker("NASDAQ:XYF")).toBe("XYF");
+    expect(normalizeTicker("ASX:LNW")).toBe("LNW");
+  });
+  it("strips wrapping quotes/brackets/parens", () => {
+    expect(normalizeTicker('"OMEX"')).toBe("OMEX");
+    expect(normalizeTicker("(SIRI)")).toBe("SIRI");
+  });
+  it("takes the first symbol of a multi-class field", () => {
+    expect(normalizeTicker("BFA, BFB")).toBe("BFA");
+    expect(normalizeTicker("MOGA/MOGB")).toBe("MOGA");
+    expect(normalizeTicker("LEN, LEN.B")).toBe("LEN");
+  });
+  it("nulls placeholders and garbage", () => {
+    for (const bad of ["NONE", "[NONE]", "NONE]", "N/A", "N O G", "", "-", null]) {
+      expect(normalizeTicker(bad)).toBeNull();
+    }
   });
 });

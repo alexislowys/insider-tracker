@@ -13,6 +13,21 @@ export function generateStaticParams() {
   return [];
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ cik: string }>;
+}) {
+  const { cik } = await params;
+  const insider = await insiderByCik(cik);
+  return {
+    title: insider ? `${insider.name} — insider trades` : "Insider",
+    description: insider
+      ? `Every SEC Form 4 trade and buy track record for ${insider.name}.`
+      : undefined,
+  };
+}
+
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">

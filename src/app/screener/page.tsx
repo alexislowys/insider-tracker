@@ -2,6 +2,7 @@ import Link from "next/link";
 import { parseFilters, screen, PAGE_SIZE } from "@/lib/screener";
 import { TradeTable } from "@/components/TradeTable";
 
+export const metadata = { title: "Screener" };
 export const dynamic = "force-dynamic";
 
 const selectCls =

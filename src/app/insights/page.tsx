@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { outcomesByRole, overallOutcomes, topInsiders } from "@/lib/insights";
 
+export const metadata = { title: "Insights" };
 export const revalidate = 300;
 
 function pct(s: string): string {
