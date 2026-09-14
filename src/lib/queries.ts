@@ -20,14 +20,18 @@ export interface ActivityRow {
   value: string | null;
 }
 
+// value is ::text for display; value_num stays numeric because ORDER BY on the
+// text alias sorts lexicographically ("999" outranks "99130" outranks "20380000").
 const ACTIVITY_SELECT = `
   SELECT f.accession_number, c.ticker, c.name AS company_name, c.cik AS company_cik,
          i.name AS insider_name, i.cik AS insider_cik,
          fo.officer_title, fo.is_director, fo.is_ten_percent_owner,
          f.is_10b5_1,
+         t.id AS transaction_id,
          t.transaction_date::text, t.code, t.shares::text,
          t.price_per_share::text,
-         (t.shares * t.price_per_share)::text AS value
+         (t.shares * t.price_per_share)::text AS value,
+         (t.shares * t.price_per_share) AS value_num
   FROM transactions t
   JOIN filings f ON f.accession_number = t.accession_number
   JOIN companies c ON c.cik = f.company_cik
@@ -40,7 +44,7 @@ export async function recentTrades(limit = 50): Promise<ActivityRow[]> {
   const db = await getDb();
   return db.query<ActivityRow>(
     `${ACTIVITY_SELECT} AND t.code IN ('P', 'S')
-     ORDER BY t.transaction_date DESC, value DESC NULLS LAST
+     ORDER BY t.transaction_date DESC, value_num DESC NULLS LAST
      LIMIT $1`,
     [limit],
   );
@@ -142,10 +146,17 @@ export async function insiderActivity(
 /** Largest single open-market buys in the window (one row per transaction). */
 export async function topBuys(days = 7, limit = 10): Promise<ActivityRow[]> {
   const db = await getDb();
+  // The filing_owners join fans one transaction out to a row per reporting
+  // owner (group filings list several co-owners for the same trade), so
+  // DISTINCT ON the transaction id before ranking by dollar value.
   return db.query<ActivityRow>(
-    `${ACTIVITY_SELECT} AND t.code = 'P'
-       AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
-     ORDER BY value DESC NULLS LAST
+    `SELECT * FROM (
+       SELECT DISTINCT ON (transaction_id) * FROM (
+         ${ACTIVITY_SELECT} AND t.code = 'P'
+           AND t.transaction_date > CURRENT_DATE - $1 * INTERVAL '1 day'
+       ) fanned ORDER BY transaction_id, insider_cik
+     ) deduped
+     ORDER BY value_num DESC NULLS LAST
      LIMIT $2`,
     [days, limit],
   );

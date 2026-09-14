@@ -9,7 +9,7 @@ import {
   createTestDb,
   injectDb,
 } from "./db/testing";
-import { clusterBuys } from "./queries";
+import { clusterBuys, topBuys } from "./queries";
 
 // One shared fixture: five companies exercising each cluster rule.
 let db: Db;
@@ -65,6 +65,19 @@ beforeAll(async () => {
   await addFiling(db, "F9", "C5", { daysAgo: 21 });
   await addOwner(db, "F9", "I2");
   await addTransaction(db, "F9", { daysAgo: 21 });
+
+  // C6: one insider (so no cluster), buy values spanning magnitudes where a
+  // lexicographic text sort would rank 999 above 99130.59 above 20380000
+  await addCompany(db, "C6", "Magnitude Corp", "CL6");
+  await addFiling(db, "F10", "C6", { daysAgo: 1 });
+  await addOwner(db, "F10", "I1");
+  await addTransaction(db, "F10", { shares: 1_000_000, price: 20.38, daysAgo: 1 });
+  await addFiling(db, "F11", "C6", { daysAgo: 1 });
+  await addOwner(db, "F11", "I1");
+  await addTransaction(db, "F11", { shares: 17121, price: 5.79, daysAgo: 1 });
+  await addFiling(db, "F12", "C6", { daysAgo: 1 });
+  await addOwner(db, "F12", "I1");
+  await addTransaction(db, "F12", { shares: 150, price: 6.66, daysAgo: 1 });
 });
 
 describe("clusterBuys", () => {
@@ -83,5 +96,22 @@ describe("clusterBuys", () => {
   it("widening the window pulls in the stale cluster", async () => {
     const rows = await clusterBuys(30);
     expect(rows.map((r) => r.ticker).sort()).toEqual(["CL1", "CL5"]);
+  });
+});
+
+describe("topBuys", () => {
+  it("ranks by numeric dollar value, not by the text cast", async () => {
+    const rows = await topBuys(7, 2);
+    expect(rows.map((r) => Number(r.value))).toEqual([20380000, 99130.59]);
+  });
+
+  it("puts the smallest buy last, not first", async () => {
+    const rows = await topBuys(7, 50);
+    expect(Number(rows[rows.length - 1].value)).toBe(999);
+  });
+
+  it("returns one row per transaction despite co-filer fanout", async () => {
+    const rows = await topBuys(7, 50);
+    expect(rows.filter((r) => r.accession_number === "F3")).toHaveLength(1);
   });
 });
