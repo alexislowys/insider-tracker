@@ -1,0 +1,28 @@
+name: Data freshness
+
+# The poll endpoint returns 200 {ok:false} on transient errors by design, so
+# green runs don't prove ingestion works — this asserts the data itself is
+# recent and fails loudly if the newest filing is older than a long weekend.
+on:
+  schedule:
+    - cron: "0 23 * * 1-5" # weekdays, after the 22:30 UTC daily ingest
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert newest filing is recent
+        run: |
+          newest=$(curl -fsS --max-time 60 \
+            https://insider-tracker-three.vercel.app/api/health \
+            | jq -r .newest_filed_date)
+          echo "newest filed_date: $newest"
+          if [ -z "$newest" ] || [ "$newest" = "null" ]; then
+            echo "::error::no filings in database"; exit 1
+          fi
+          age_days=$(( ( $(date +%s) - $(date -d "$newest" +%s) ) / 86400 ))
+          echo "age: ${age_days} day(s)"
+          if [ "$age_days" -gt 4 ]; then
+            echo "::error::data is stale (${age_days} days old)"; exit 1
+          fi
