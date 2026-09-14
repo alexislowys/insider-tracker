@@ -75,9 +75,11 @@ npx tsx scripts/stats.ts              # row counts + sanity checks
 
 ## Security
 
-- **Untrusted input** (SEC XML, EDGAR feeds) is parsed with a patched `fast-xml-parser`; all SQL is parameterized; cron routes require a bearer secret; email alerts use double opt-in with single-use, high-entropy tokens.
+- **Untrusted input** (SEC XML, EDGAR feeds) is parsed with a patched `fast-xml-parser`; all SQL is parameterized; EDGAR-sourced names are HTML-escaped before going into alert emails.
+- **Cron routes** require a bearer secret, compared timing-safe and failing closed — an unset `CRON_SECRET` locks the endpoints rather than opening them.
+- **Email alerts** use double opt-in with single-use, high-entropy tokens, a per-subscription resend cooldown, and a per-address hourly send cap so the subscribe endpoint can't be used to spam a victim address.
 - **Headers**: HSTS, `X-Frame-Options: DENY`, `nosniff`, and a restrictive `Referrer-Policy`/`Permissions-Policy` are set globally.
-- **Known transitive advisories**: `npm audit` reports highs in `postcss` and `sharp`, both pulled in by Next.js 16 itself (not direct deps). They are **build-time only** — `postcss` runs during CSS compilation and `sharp` powers `next/image` optimization, neither of which processes attacker-controlled input in this app. `npm audit fix --force` would downgrade Next to v9 and break the build, so these wait on an upstream Next release rather than a forced, breaking resolution.
+- **Dependencies**: `npm audit --omit=dev` is clean as of Next 16.3.5.
 
 ## Data notes
 

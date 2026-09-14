@@ -15,14 +15,14 @@ import { getDb } from "@/lib/db";
 import { ingestRefs } from "@/lib/ingest";
 import { listCurrentForm4Filings } from "@/lib/edgar/current";
 import { dispatchAlerts } from "@/lib/alerts";
+import { cronAuthorized } from "@/lib/cron-auth";
 
 export const maxDuration = 300;
 
 const LOCK_KEY = 721;
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

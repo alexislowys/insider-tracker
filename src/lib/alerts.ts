@@ -7,6 +7,15 @@ import { randomBytes } from "node:crypto";
 import type { Db } from "./db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// EDGAR-sourced names go into email HTML — escape them (S&P, <, quotes).
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 const FROM = process.env.ALERT_FROM ?? "InsiderTracker <onboarding@resend.dev>";
 const BASE = process.env.APP_URL ?? "https://insider-tracker-three.vercel.app";
 
@@ -60,28 +69,53 @@ export async function subscribe(
   if (company.length === 0) return { ok: false, error: "Unknown ticker" };
 
   const token = randomBytes(24).toString("hex");
-  const [row] = await db.query<{ token: string; confirmed: boolean }>(
+  const [row] = await db.query<{
+    token: string;
+    confirmed: boolean;
+    last_sent_at: string | null;
+  }>(
     `INSERT INTO alert_subscriptions (email, company_cik, token)
      VALUES ($1, $2, $3)
      ON CONFLICT (email, company_cik) DO UPDATE SET email = EXCLUDED.email
-     RETURNING token, confirmed`,
+     RETURNING token, confirmed, last_sent_at`,
     [addr, company[0].cik, token],
   );
 
   // Already confirmed from a prior signup — nothing to re-confirm
   if (row.confirmed) return { ok: true };
 
+  // Re-POSTing a pending pair must not re-send the confirmation: without a
+  // cooldown this endpoint is an email bomb aimed at any victim address.
+  // 1h per subscription, and at most 3 confirmation sends per address per
+  // hour across tickers (an attacker can otherwise rotate tickers).
+  const HOUR_MS = 60 * 60 * 1000;
+  if (row.last_sent_at && Date.now() - new Date(row.last_sent_at).getTime() < HOUR_MS) {
+    return { ok: true };
+  }
+  const [{ sends }] = await db.query<{ sends: string }>(
+    `SELECT COUNT(*)::text AS sends FROM alert_subscriptions
+     WHERE email = $1 AND last_sent_at > now() - INTERVAL '1 hour'`,
+    [addr],
+  );
+  if (Number(sends) >= 3) return { ok: true };
+
   // Double opt-in: the address must click the link before any alert fires.
   // This is what stops someone subscribing a victim's email without consent.
-  await sendEmail(
+  const delivered = await sendEmail(
     addr,
     `Confirm alerts for ${ticker.toUpperCase()}`,
     `<p>Confirm you want insider-filing alerts for ` +
-      `<strong>${ticker.toUpperCase()}</strong>.</p>` +
+      `<strong>${esc(ticker.toUpperCase())}</strong>.</p>` +
       `<p><a href="${BASE}/api/alerts/confirm?token=${row.token}">Confirm alerts</a></p>` +
       `<p>If you didn't request this, ignore this email — no alerts are sent ` +
       `until you confirm.</p>`,
   );
+  if (delivered) {
+    await db.query(
+      `UPDATE alert_subscriptions SET last_sent_at = now() WHERE token = $1`,
+      [row.token],
+    );
+  }
   return { ok: true };
 }
 
@@ -143,8 +177,8 @@ export async function dispatchAlerts(db: Db): Promise<{ sent: number; pending: n
     const ok = await sendEmail(
       a.email,
       `${a.ticker}: new insider filing (${a.insider_names})`,
-      `<p>New Form 4 filed for <strong>${a.ticker}</strong> (${a.company_name}) ` +
-        `on ${a.filed_date.slice(0, 10)} by ${a.insider_names}.</p>` +
+      `<p>New Form 4 filed for <strong>${esc(a.ticker)}</strong> (${esc(a.company_name)}) ` +
+        `on ${a.filed_date.slice(0, 10)} by ${esc(a.insider_names)}.</p>` +
         `<p><a href="${BASE}/company/${a.ticker}">View activity</a> · ` +
         `<a href="${BASE}/api/alerts/unsubscribe?token=${a.token}">Unsubscribe</a></p>`,
     );

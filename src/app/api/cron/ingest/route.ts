@@ -10,14 +10,14 @@ import { getDb } from "@/lib/db";
 import { ingestDay } from "@/lib/ingest";
 import { dispatchAlerts } from "@/lib/alerts";
 import { warmPriceCoverage } from "@/lib/insights";
+import { cronAuthorized } from "@/lib/cron-auth";
 
 export const maxDuration = 300;
 
 const LOCK_KEY = 721;
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

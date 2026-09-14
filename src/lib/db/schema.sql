@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS alert_subscriptions (
   UNIQUE (email, company_cik)
 );
 ALTER TABLE alert_subscriptions ADD COLUMN IF NOT EXISTS confirmed BOOLEAN NOT NULL DEFAULT FALSE;
+-- Confirmation-email cooldown (see alerts.ts subscribe): NULL = never sent
+ALTER TABLE alert_subscriptions ADD COLUMN IF NOT EXISTS last_sent_at TIMESTAMPTZ;
 
 -- One row per alert actually sent; the PK prevents double-notifying
 CREATE TABLE IF NOT EXISTS alert_notifications (
