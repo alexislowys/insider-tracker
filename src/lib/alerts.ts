@@ -16,6 +16,8 @@ function esc(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+// Confirmation emails per hour across all addresses (see subscribe)
+export const GLOBAL_CONFIRMATIONS_PER_HOUR = 30;
 const FROM = process.env.ALERT_FROM ?? "InsiderTracker <onboarding@resend.dev>";
 const BASE = process.env.APP_URL ?? "https://insider-tracker-three.vercel.app";
 
@@ -98,6 +100,16 @@ export async function subscribe(
     [addr],
   );
   if (Number(sends) >= 3) return { ok: true };
+
+  // Global ceiling: the per-address caps don't stop one attacker rotating
+  // victim addresses to drain the sender's daily email quota, which would
+  // silently starve real alerts. Above this rate the signup still succeeds
+  // (nothing to enumerate) but no confirmation goes out this hour.
+  const [{ total }] = await db.query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total FROM alert_subscriptions
+     WHERE last_sent_at > now() - INTERVAL '1 hour'`,
+  );
+  if (Number(total) >= GLOBAL_CONFIRMATIONS_PER_HOUR) return { ok: true };
 
   // Double opt-in: the address must click the link before any alert fires.
   // This is what stops someone subscribing a victim's email without consent.
