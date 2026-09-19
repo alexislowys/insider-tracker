@@ -12,15 +12,38 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/*
+ * Light mode (respects the visitor's OS setting).
+ *
+ * The UI uses the zinc scale monotonically — dark backgrounds (zinc-950/900),
+ * light text (zinc-100). Rather than touch 121 class usages, we MIRROR the zinc
+ * ramp here: each shade S is remapped to the default value of zinc-(1000-S), so
+ * `bg-zinc-950` becomes near-white, `text-zinc-100` becomes near-black, etc.
+ * Accent -400s are darkened to their -600 value for contrast on a light ground.
+ * Dark mode is the default (block below not applied), so it is untouched.
+ */
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-zinc-50: oklch(14.1% 0.005 285.823);
+    --color-zinc-100: oklch(21% 0.006 285.885);
+    --color-zinc-200: oklch(27.4% 0.006 286.033);
+    --color-zinc-300: oklch(37% 0.013 285.805);
+    --color-zinc-400: oklch(44.2% 0.017 285.786);
+    --color-zinc-500: oklch(55.2% 0.016 285.938);
+    --color-zinc-600: oklch(70.5% 0.015 286.067);
+    --color-zinc-700: oklch(87.1% 0.006 286.286);
+    --color-zinc-800: oklch(92% 0.004 286.32);
+    --color-zinc-900: oklch(96.7% 0.001 286.375);
+    --color-zinc-950: oklch(98.5% 0 0);
+
+    /* darken accents so buys/sells/links stay legible on white */
+    --color-emerald-400: oklch(59.6% 0.145 163.225);
+    --color-sky-400: oklch(58.8% 0.158 241.966);
+    --color-red-400: oklch(57.7% 0.245 27.325);
+    --color-amber-400: oklch(66.6% 0.179 58.318);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }

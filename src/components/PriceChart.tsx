@@ -73,21 +73,21 @@ export function PriceChart({
             <g key={t}>
               <line
                 x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)}
-                stroke="#3f3f46" strokeWidth="0.5" strokeDasharray="3 4"
+                className="stroke-zinc-800" strokeWidth="0.5" strokeDasharray="3 4"
               />
-              <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" fontSize="10" fill="#71717a">
+              <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" fontSize="10" className="fill-zinc-500">
                 ${t >= 100 ? t.toFixed(0) : t.toFixed(2)}
               </text>
             </g>
           ))}
-          <text x={PAD.left} y={H - 6} fontSize="10" fill="#71717a">{firstDate}</text>
-          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize="10" fill="#71717a">{lastDate}</text>
-          <path d={path} fill="none" stroke="#38bdf8" strokeWidth="1.5" />
+          <text x={PAD.left} y={H - 6} fontSize="10" className="fill-zinc-500">{firstDate}</text>
+          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize="10" className="fill-zinc-500">{lastDate}</text>
+          <path d={path} fill="none" className="stroke-sky-400" strokeWidth="1.5" />
           {markers.map((m, i) => (
             <circle
               key={i} cx={m.cx} cy={m.cy} r="5"
-              fill={m.buy ? "#10b981" : "#ef4444"}
-              fillOpacity="0.85" stroke="#18181b" strokeWidth="1.5"
+              className={`${m.buy ? "fill-emerald-500" : "fill-red-500"} stroke-zinc-950`}
+              fillOpacity="0.85" strokeWidth="1.5"
             >
               <title>{m.label}</title>
             </circle>
