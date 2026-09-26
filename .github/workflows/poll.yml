@@ -1,15 +1,15 @@
 name: Poll EDGAR
 
-# GitHub cron fires at 5-minute granularity minimum, but five schedules
-# offset by one minute give effective ~1-minute polling. Runs may lag a
-# few minutes under load — the poll endpoint is idempotent, overlap is free.
+# Every 30 minutes. On a PRIVATE repo, GitHub Actions minutes are metered
+# (~2,000 free/month), so we can't poll every minute here — 48 runs/day keeps
+# well under budget. Filings carry a ~2-day legal reporting lag, so 30-minute
+# freshness is effectively the same as 1-minute for this data. The endpoint is
+# idempotent, and the daily Vercel cron is a second self-healing backstop.
+# (Want true ~1-min again? Move this curl to a tiny PUBLIC pinger repo, where
+# Actions is unlimited — no app code lives there, so privacy is preserved.)
 on:
   schedule:
-    - cron: "0-59/5 * * * *"
-    - cron: "1-59/5 * * * *"
-    - cron: "2-59/5 * * * *"
-    - cron: "3-59/5 * * * *"
-    - cron: "4-59/5 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 concurrency:
